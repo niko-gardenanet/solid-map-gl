@@ -1,19 +1,25 @@
-import { createContext, useContext, ParentComponent } from 'solid-js'
-import { createStore } from 'solid-js/store'
+import { createContext, ParentComponent, Show, useContext } from 'solid-js'
 import type { Map } from '../MapGL'
 
-const [state, setState] = createStore({ map: null })
+export const MapContext = createContext<[{ map: Map }]>()
 
-export const MapContext = createContext([state])
-
-export const useMapContext = () => useContext(MapContext)
+export function useMapContext() {
+  const context = useContext(MapContext)
+  if (context === undefined)
+    throw new Error('useMapContext must be used within a MapProvider')
+  return context
+}
 
 export const MapProvider: ParentComponent<{
   map?: Map
 }> = (props) => {
-  props.map && setState('map', props.map)
-
   return (
-    <MapContext.Provider value={[state]}>{props.children}</MapContext.Provider>
+    <Show when={props.map}>
+      {(map) => (
+        <MapContext.Provider value={[{ map: map() }]}>
+          {props.children}
+        </MapContext.Provider>
+      )}
+    </Show>
   )
 }
